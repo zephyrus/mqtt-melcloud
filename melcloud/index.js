@@ -75,6 +75,7 @@ class Cloud extends EventEmitter {
 
 		// proxy device updates
 		device.on('update', (...args) => this.emit('update', device, ...args));
+		device.on('schedule', (...args) => this.emit('schedule', device, ...args));
 		device.on('connect', (...args) => this.emit('device', device, ...args));
 		device.on('error', (...args) => this.emit('device/error', device, ...args));
 	}

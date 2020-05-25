@@ -139,8 +139,8 @@ class Device extends EventEmitter {
 
 	parseSchedule(state) {
 		return {
-			prev: new Date(state.LastCommunication),
-			next: new Date(state.NextCommunication),
+			prev: (new Date(`${state.LastCommunication}Z`)).toISOString(),
+			next: (new Date(`${state.NextCommunication}Z`)).toISOString(),
 		};
 	}
 
@@ -173,9 +173,9 @@ class Device extends EventEmitter {
 				...this.ability,
 			});
 
-			this.emit('update', next);
+			this.emit('update', next, next);
 
-			this.emit('schedule', nextSchedule);
+			this.emit('schedule', nextSchedule, nextSchedule);
 
 			this.state = next;
 
@@ -185,13 +185,13 @@ class Device extends EventEmitter {
 		const diffSchedule = diff(this.schedule, nextSchedule);
 		if (diffSchedule && Object.keys(diffSchedule).length > 0) {
 			this.schedule = nextSchedule;
-			this.emit('schedule', diffSchedule);
+			this.emit('schedule', this.schedule, diffSchedule);
 		}
 
 		const diffState = diff(this.state, next);
 		if (diffState && Object.keys(diffState).length > 0) {
 			this.state = next;
-			this.emit('update', diffState);
+			this.emit('update', this.state, diffState);
 		}
 
 		return this.state;

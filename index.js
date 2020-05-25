@@ -6,6 +6,8 @@ const topics = {
 	state: () => `${config.mqtt.path}/state`,
 	device: () => `${config.mqtt.path}/device`,
 	update: (id) => `${config.mqtt.path}/${id}`,
+	diff: (id) => `${config.mqtt.path}/${id}/diff`,
+	schedule: (id) => `${config.mqtt.path}/${id}/schedule`,
 	change: (id) => `${config.mqtt.path}/${id}/set`,
 };
 
@@ -28,13 +30,22 @@ const cloud = melcloud({
 
 const subsciptions = {};
 
+const format = (type, args) => [
+	(new Date()).toISOString().substring(0, 10),
+	(new Date()).toTimeString().substring(0, 8),
+	`[${type.toUpperCase()}]`,
+	...args,
+].join(' ');
 
-mqtt.on('connect', () => {
-	console.log(`[MQTT] connected to ${config.mqtt.host}`);
-});
+const log = (type, ...args) => console.log(format(type, args));
+
+const error = (type, ...args) => console.error(format(type, args));
+
+mqtt.on('connect', () => log('mqtt', `connected to ${config.mqtt.host}`));
 
 cloud.on('login', () => {
-	console.log(`[MELCLOUD] logged in as ${config.melcloud.username}`);
+	log('melcloud', `logged in as ${config.melcloud.username}`);
+	log('melcloud', `polling interval is ${config.melcloud.interval}ms`);
 
 	mqtt.publish(topics.state(), 'online', {
 		retain: true,
@@ -46,42 +57,55 @@ cloud.on('device', (device) => {
 	mqtt.subscribe(topic);
 	subsciptions[topic] = device;
 
-	console.log(`[MELCLOUD] registering device at ${topics.update(device.id, device.building)}`);
+	log('melcloud', `registed device at ${topics.update(device.id, device.building)}`);
 
 	mqtt.publish(topics.device(), JSON.stringify(device.info), {
 		retain: true,
 	});
 });
 
-cloud.on('update', (device, state) => {
-	console.log(`[MELCLOUD] received update for ${topics.update(device.id, device.building)}`);
+cloud.on('update', (device, state, diff) => {
+	log('melcloud', `received update for ${topics.update(device.id, device.building)}`);
+	log('melcloud', `  > ${JSON.stringify(diff)}`);
 
 	mqtt.publish(topics.update(device.id, device.building), JSON.stringify(state), {
 		retain: true,
 	});
+
+	mqtt.publish(topics.diff(device.id, device.building), JSON.stringify(state));
+});
+
+cloud.on('schedule', (device, state, diff) => {
+	log('melcloud', `schedule for ${topics.update(device.id, device.building)}`);
+	log('melcloud', `  > ${JSON.stringify(diff)}`);
+
+	mqtt.publish(topics.schedule(device.id, device.building), JSON.stringify(state));
 });
 
 mqtt.on('message', (topic, data) => {
 	const device = subsciptions[topic];
 
 	if (!device) {
-		console.error(`[MQTT] received data for unknown device ${topic}`);
+		error('mqtt', `received data for unknown device ${topic}`);
 		return;
 	}
 
 	try {
+		log('mqtt', `received update for ${topic}`);
+		log('mqtt', `  > ${data.toString()}`);
+
 		device.set(JSON.parse(data.toString()));
 	} catch (e) {
-		console.error('[MQTT] not able to parse incoming message');
+		error('mqtt', 'not able to parse incoming message');
 	}
 });
 
 cloud.on('error', (e) => {
-	console.error('[MELCLOUD] unexpected error:');
-	console.error(e);
+	error('melcloud', 'unexpected error');
+	error('melcloud', `  > ${e.toString()}`);
 });
 
 cloud.on('device/error', (device, e) => {
-	console.error('[MELCLOUD] unexpected device error:');
-	console.error(e);
+	error('melcloud', 'unexpected device error');
+	error('melcloud', `  > ${e.toString()}`);
 });
