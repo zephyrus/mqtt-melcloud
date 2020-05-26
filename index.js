@@ -100,9 +100,22 @@ mqtt.on('message', (topic, data) => {
 	}
 });
 
+mqtt.on('error', (e) => {
+	error('mqtt', 'connection error');
+	error('mqtt', `  > ${e.toString()}`);
+
+	// exiting in case of error so
+	// supervisor can restart it
+	process.exit(1);
+});
+
 cloud.on('error', (e) => {
 	error('melcloud', 'unexpected error');
 	error('melcloud', `  > ${e.toString()}`);
+
+	// exiting in case of error so
+	// supervisor can restart it
+	process.exit(1);
 });
 
 cloud.on('device/error', (device, e) => {
