@@ -72,7 +72,7 @@ cloud.on('update', (device, state, diff) => {
 		retain: true,
 	});
 
-	mqtt.publish(topics.diff(device.id, device.building), JSON.stringify(state));
+	mqtt.publish(topics.diff(device.id, device.building), JSON.stringify(diff));
 });
 
 cloud.on('schedule', (device, state, diff) => {
