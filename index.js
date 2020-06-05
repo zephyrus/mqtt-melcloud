@@ -1,6 +1,7 @@
 const { connect } = require('mqtt');
 const { melcloud } = require('./melcloud');
 const { config } = require('./config');
+const { version } = require('./package');
 
 const topics = {
 	state: () => `${config.mqtt.path}/state`,
@@ -17,7 +18,7 @@ const mqtt = connect(config.mqtt.host, {
 	clientId: config.mqtt.id,
 	will: {
 		topic: topics.state(),
-		payload: 'offline',
+		payload: JSON.stringify({ online: false }),
 		retain: true,
 	},
 });
@@ -47,9 +48,10 @@ cloud.on('login', () => {
 	log('melcloud', `logged in as ${config.melcloud.username}`);
 	log('melcloud', `polling interval is ${config.melcloud.interval}ms`);
 
-	mqtt.publish(topics.state(), 'online', {
-		retain: true,
-	});
+	mqtt.publish(topics.state(), JSON.stringify({
+		online: true,
+		version,
+	}), { retain: true });
 });
 
 cloud.on('device', (device) => {
