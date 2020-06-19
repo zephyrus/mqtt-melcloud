@@ -8,6 +8,8 @@ const req = (opts) => new Promise((resolve, reject) => request(opts, (err, respo
 	return resolve(response);
 }));
 
+const timeout = (time) => new Promise((resolve) => setTimeout(resolve, time));
+
 class Cloud extends EventEmitter {
 
 	constructor({ username, password, interval }) {
@@ -65,6 +67,12 @@ class Cloud extends EventEmitter {
 				this.login = data;
 
 				return data;
+			})
+			.catch((e) => {
+				this.emit('error', e);
+
+				return timeout(1000)
+					.then(() => this.login(username, password));
 			});
 	}
 

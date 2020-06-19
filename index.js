@@ -7,6 +7,7 @@ const topics = {
 	state: () => `${config.mqtt.path}/state`,
 	device: () => `${config.mqtt.path}/device`,
 	update: (id) => `${config.mqtt.path}/${id}`,
+	info: (id) => `${config.mqtt.path}/${id}/info`,
 	diff: (id) => `${config.mqtt.path}/${id}/diff`,
 	schedule: (id) => `${config.mqtt.path}/${id}/schedule`,
 	change: (id) => `${config.mqtt.path}/${id}/set`,
@@ -62,6 +63,10 @@ cloud.on('device', (device) => {
 	mqtt.publish(topics.device(), JSON.stringify(device.info), {
 		retain: true,
 	});
+
+	mqtt.publish(topics.info(device.id), JSON.stringify(device.info), {
+		retain: true,
+	});
 });
 
 cloud.on('update', (device, state, diff) => {
@@ -103,19 +108,11 @@ mqtt.on('message', (topic, data) => {
 mqtt.on('error', (e) => {
 	error('mqtt', 'connection error');
 	error('mqtt', `  > ${e.toString()}`);
-
-	// exiting in case of error so
-	// supervisor can restart it
-	process.exit(1);
 });
 
 cloud.on('error', (e) => {
 	error('melcloud', 'unexpected error');
 	error('melcloud', `  > ${e.toString()}`);
-
-	// exiting in case of error so
-	// supervisor can restart it
-	process.exit(1);
 });
 
 cloud.on('device/error', (device, e) => {
