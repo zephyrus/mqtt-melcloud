@@ -10,4 +10,4 @@ COPY index.js ./
 COPY config.js ./
 COPY melcloud/ ./melcloud
 
-CMD [ "npm", "start" ]
+CMD [ "node", "index.js" ]

@@ -1,6 +1,6 @@
 {
 	"name": "mqtt-melcloud",
-	"version": "0.0.7",
+	"version": "0.0.8",
 
 	"description": "MQTT integration for Mitsubishi Melcloud devices",
 	"author": "zephyrus",
