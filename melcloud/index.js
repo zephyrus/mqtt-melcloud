@@ -1,9 +1,13 @@
 const request = require('request');
 const { EventEmitter } = require('events');
+const { lookup } = require('lookup-dns-cache');
 
 const { Device } = require('./device');
 
-const req = (opts) => new Promise((resolve, reject) => request(opts, (err, response) => {
+const req = (opts) => new Promise((resolve, reject) => request({
+	...opts,
+	lookup,
+}, (err, response) => {
 	if (err) return reject(err);
 	return resolve(response);
 }));

@@ -1,6 +1,6 @@
 {
 	"name": "mqtt-melcloud",
-	"version": "0.0.8",
+	"version": "0.0.9",
 
 	"description": "MQTT integration for Mitsubishi Melcloud devices",
 	"author": "zephyrus",
@@ -31,7 +31,8 @@
 
 	"dependencies": {
 		"mqtt": "4.1.0",
-		"request": "2.88.2"
+		"request": "2.88.2",
+		"lookup-dns-cache": "2.1.0"
 	},
 
 	"devDependencies": {
