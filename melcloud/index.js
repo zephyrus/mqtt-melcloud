@@ -1,18 +1,49 @@
+const dns = require('dns');
 const request = require('request');
 const { EventEmitter } = require('events');
-const { lookup } = require('lookup-dns-cache');
 
 const { Device } = require('./device');
 
-const req = (opts) => new Promise((resolve, reject) => request({
-	...opts,
-	lookup,
-}, (err, response) => {
+const req = (opts) => new Promise((resolve, reject) => request(opts, (err, response) => {
 	if (err) return reject(err);
 	return resolve(response);
 }));
 
 const timeout = (time) => new Promise((resolve) => setTimeout(resolve, time));
+
+const cache = {};
+
+const random = (arr) => arr[Math.trunc(Math.random() * arr.length)];
+const filter = (host) => {
+	const data = cache[host];
+
+	if (!data) return;
+
+	const ttl = Math.trunc((+new Date() - data.time) / 1000);
+	data.addr = data.addr.filter((addr) => ttl <= addr.ttl);
+
+	if (!data.addr.length) return;
+
+	return random(data.addr);
+};
+
+const lookup = (host, opts, callback) => {
+	const ip = filter(host);
+	if (ip) {
+		return callback(null, ip.address, 4);
+	}
+
+	dns.resolve4(host, { ttl: true }, (err, result) => {
+		if (err) return callback(err);
+
+		cache[host] = {
+			time: +new Date(),
+			addr: result,
+		};
+
+		callback(null, random(result).address, 4);
+	});
+};
 
 class Cloud extends EventEmitter {
 
@@ -38,6 +69,7 @@ class Cloud extends EventEmitter {
 	request(opts) {
 		return req({
 			...opts,
+			lookup,
 			headers: {
 				'X-MitsContextKey': this.login.ContextKey,
 				'content-type': 'application/json',
