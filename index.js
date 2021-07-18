@@ -7,6 +7,7 @@ const topics = {
 	state: () => `${config.mqtt.path}/state`,
 	device: () => `${config.mqtt.path}/device`,
 	update: (id) => `${config.mqtt.path}/${id}`,
+	status: (id) => `${config.mqtt.path}/${id}/status`,
 	info: (id) => `${config.mqtt.path}/${id}/info`,
 	diff: (id) => `${config.mqtt.path}/${id}/diff`,
 	schedule: (id) => `${config.mqtt.path}/${id}/schedule`,
@@ -69,20 +70,27 @@ cloud.on('device', (device) => {
 	});
 });
 
-cloud.on('update', (device, state, diff) => {
-	log('melcloud', `received update for ${topics.update(device.id, device.building)}`);
+cloud.on('state', (device, state, diff) => {
+	log('melcloud', `received state for ${topics.update(device.id, device.building)}`);
 	log('melcloud', `  > ${JSON.stringify(diff)}`);
 
 	mqtt.publish(topics.update(device.id, device.building), JSON.stringify(state), {
 		retain: true,
 	});
+});
 
-	mqtt.publish(topics.diff(device.id, device.building), JSON.stringify(diff));
+cloud.on('status', (device, state, diff) => {
+	log('melcloud', `received status for ${topics.update(device.id, device.building)}`);
+	log('melcloud', `  > ${JSON.stringify(diff)}`);
+
+	mqtt.publish(topics.status(device.id, device.building), JSON.stringify(state), {
+		retain: true,
+	});
 });
 
 cloud.on('schedule', (device, state, diff) => {
-	log('melcloud', `schedule for ${topics.update(device.id, device.building)}`);
-	log('melcloud', `  > ${JSON.stringify(diff)}`);
+	// log('melcloud', `schedule for ${topics.update(device.id, device.building)}`);
+	// log('melcloud', `  > ${JSON.stringify(diff)}`);
 
 	mqtt.publish(topics.schedule(device.id, device.building), JSON.stringify(state));
 });

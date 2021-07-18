@@ -1,6 +1,6 @@
 {
 	"name": "mqtt-melcloud",
-	"version": "0.0.10",
+	"version": "0.1.0",
 
 	"description": "MQTT integration for Mitsubishi Melcloud devices",
 	"author": "zephyrus",
@@ -30,14 +30,14 @@
 	},
 
 	"dependencies": {
-		"mqtt": "4.1.0",
+		"mqtt": "4.2.8",
 		"request": "2.88.2",
 		"lookup-dns-cache": "2.1.0"
 	},
 
 	"devDependencies": {
-		"eslint": "6.8.0",
-		"eslint-plugin-import": "2.20.2",
-		"eslint-config-airbnb-base": "14.1.0"
+		"eslint": "7.31.0",
+		"eslint-plugin-import": "2.23.4",
+		"eslint-config-airbnb-base": "14.2.0"
 	}
 }

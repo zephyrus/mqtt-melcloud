@@ -103,37 +103,41 @@ class Device extends EventEmitter {
 			.catch((e) => this.emit('error', e));
 	}
 
-	prepareUpdate(update, ability) {
+	prepareUpdate(state, ability) {
 		return {
-			Power: update.power !== undefined
-				? !!update.power
+			Power: state.power !== undefined
+				? !!state.power
 				: undefined,
-			SetTemperature: update.target
-				? Math.round(update.target * 2) / 2
+			SetTemperature: state.target
+				? Math.round(state.target * 2) / 2
 				: undefined,
-			SetFanSpeed: update.fan === 'auto'
+			SetFanSpeed: state.fan === 'auto'
 				? 0
-				: Math.floor(update.fan * ability.speeds),
-			OperationMode: operationMode[update.mode],
-			VaneHorizontal: prepareHorizontal(update.horizontal),
-			VaneVertical: prepareVertical(update.vertical),
+				: Math.floor(state.fan * ability.speeds),
+			OperationMode: operationMode[state.mode],
+			VaneHorizontal: prepareHorizontal(state.horizontal),
+			VaneVertical: prepareVertical(state.vertical),
 		};
 	}
 
 	parseState(state) {
 		return {
-			online: !state.Offline,
-			power: state.Power,
-			sync: !state.HasPendingCommand,
-			temperature: state.RoomTemperature,
-			target: state.SetTemperature,
-			fan: state.SetFanSpeed === 0
-				? 'auto'
-				: state.SetFanSpeed / state.NumberOfFanSpeeds,
-			mode: Object.keys(operationMode)
-				.find((k) => operationMode[k] === state.OperationMode),
-			horizontal: parseHorizontal(state.VaneHorizontal),
-			vertical: parseVertical(state.VaneVertical),
+			status: {
+				online: !state.Offline,
+				sync: !state.HasPendingCommand,
+				temperature: state.RoomTemperature,
+			},
+			state: {
+				power: state.Power,
+				target: state.SetTemperature,
+				fan: state.SetFanSpeed === 0
+					? 'auto'
+					: state.SetFanSpeed / state.NumberOfFanSpeeds,
+				mode: Object.keys(operationMode)
+					.find((k) => operationMode[k] === state.OperationMode),
+				horizontal: parseHorizontal(state.VaneHorizontal),
+				vertical: parseVertical(state.VaneVertical),
+			},
 		};
 	}
 
@@ -163,6 +167,14 @@ class Device extends EventEmitter {
 		this.rawState = state;
 
 		const next = this.parseState(state);
+
+		next.status = {
+			...(next.status.sync ? next.state : this.state && this.state.status),
+			...next.status,
+		};
+
+		delete next.status.sync;
+
 		const nextSchedule = this.parseSchedule(state);
 
 		this.ability = this.parseAbility(state);
@@ -173,8 +185,8 @@ class Device extends EventEmitter {
 				...this.ability,
 			});
 
-			this.emit('update', next, next);
-
+			this.emit('state', next.state, next.state);
+			this.emit('status', next.status, next.status);
 			this.emit('schedule', nextSchedule, nextSchedule);
 
 			this.state = next;
@@ -188,10 +200,16 @@ class Device extends EventEmitter {
 			this.emit('schedule', this.schedule, diffSchedule);
 		}
 
-		const diffState = diff(this.state, next);
+		const diffState = diff(this.state.state, next.state);
 		if (diffState && Object.keys(diffState).length > 0) {
-			this.state = next;
-			this.emit('update', this.state, diffState);
+			this.state.state = next.state;
+			this.emit('state', this.state.state, diffState);
+		}
+
+		const diffStatus = diff(this.state.status, next.status);
+		if (diffStatus && Object.keys(diffStatus).length > 0) {
+			this.state.status = next.status;
+			this.emit('status', this.state.status, diffStatus);
 		}
 
 		return this.state;
