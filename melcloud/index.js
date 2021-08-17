@@ -69,7 +69,7 @@ class Cloud extends EventEmitter {
 	request(opts) {
 		return req({
 			...opts,
-			lookup,
+			// lookup,
 			headers: {
 				'X-MitsContextKey': this.login.ContextKey,
 				'content-type': 'application/json',
