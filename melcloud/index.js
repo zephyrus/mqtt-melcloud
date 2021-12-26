@@ -47,7 +47,7 @@ const lookup = (host, opts, callback) => {
 
 class Cloud extends EventEmitter {
 
-	constructor({ username, password, interval }) {
+	constructor({ username, password, interval, refresh }) {
 		super();
 
 		this.devices = [];
@@ -60,6 +60,8 @@ class Cloud extends EventEmitter {
 					name: login.Name,
 					country: login.CountryName,
 				});
+
+				setInterval(() => this.fetch(), refresh);
 
 				this.fetch();
 			})
@@ -113,6 +115,12 @@ class Cloud extends EventEmitter {
 	}
 
 	attach(data, location) {
+		const known = this.devices.some((device) => {
+			return device.id === data.DeviceID && device.building === data.BuildingID;
+		});
+
+		if (known) return;
+
 		const device = new Device(this, data, location);
 
 		this.devices.push(device);

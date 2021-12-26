@@ -25,11 +25,7 @@ const mqtt = connect(config.mqtt.host, {
 	},
 });
 
-const cloud = melcloud({
-	username: config.melcloud.username,
-	password: config.melcloud.password,
-	interval: config.melcloud.interval,
-});
+const cloud = melcloud(config.melcloud);
 
 const subsciptions = {};
 

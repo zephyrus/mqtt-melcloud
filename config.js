@@ -12,6 +12,7 @@ module.exports.config = {
 		username: process.env.MELCLOUD_USERNAME,
 		password: process.env.MELCLOUD_PASSWORD,
 		interval: process.env.MELCLOUD_INTERVAL || 5000,
+		refresh: process.env.MELCLOUD_REFRESH || 60000,
 	},
 
 };
